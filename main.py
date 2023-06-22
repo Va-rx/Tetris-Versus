@@ -1,8 +1,8 @@
-import sys
-
 import time
+import sys
 from button import Button
 from settings import *
+
 
 pygame.init()
 
@@ -17,7 +17,6 @@ changed1_keys_timer, changed2_keys_timer = time.time(), time.time()
 
 
 class Figure:
-
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -87,7 +86,7 @@ class Tetris:
         if y > self.height - 1 or \
                 x > 2 * self.width + 3 or \
                 x < 0 or \
-                (x > self.width - 1 and x < self.width + self.bridge_width) and (
+                (self.width - 1 < x < self.width + self.bridge_width) and (
                 y < self.bridge_start or y > self.bridge_end) or \
                 self.field[y][x] != 0:
             return True
@@ -122,9 +121,11 @@ class Tetris:
             if flag:
                 if self is game1:
                     game1.speed += 2
-                    game2.speed -= 2
+                    if game2.speed - 2 > 0:
+                        game2.speed -= 2
                 else:
-                    game1.speed -= 2
+                    if game1.speed -2 > 0:
+                        game1.speed -= 2
                     game2.speed += 2
                 color = self.field[i][start_point]
                 x2speed = True
@@ -136,23 +137,25 @@ class Tetris:
                 if x2speed:
                     if self is game1:
                         game1.speed += 3
-                        game2.speed -= 3
+                        if game2.speed-3 > 0:
+                            game2.speed -= 3
                     else:
-                        game1.speed -= 3
+                        if game1.speed - 3 > 0:
+                            game1.speed -= 3
                         game2.speed += 3
                 else:
                     if self is game1:
                         game1.speed += 2
-                        game2.speed -= 2
+                        if game2.speed-3 > 0:
+                            game2.speed -= 3
                     else:
-                        game1.speed -= 2
+                        if game1.speed-3 > 0:
+                            game1.speed -= 3
                         game2.speed += 2
-
 
     def break_lines(self):
         self.part_clear(0)
         self.part_clear(self.width + self.bridge_width)
-
 
     def drop(self):
         while not self.inters():
@@ -169,7 +172,7 @@ class Tetris:
     def bomb_explosion(self, x, y):
         for a in range(3):
             for b in range(3):
-                if y - 1 + a >= 0 and x - 1 + b >= 0 and y - 1 + a < self.height and x - 1 + b < 2 * self.width + self.bridge_width:
+                if 0 <= y - 1 + a < self.height and 0 <= x - 1 + b < 2 * self.width + self.bridge_width:
                     self.field[y - 1 + a][x - 1 + b] = 0
 
     def freeze(self):
@@ -215,7 +218,7 @@ def create_map(game):
         for i in range(game.bridge_start, game.bridge_end + 1):
             for j in range(game.width, game.bridge_start + game.width):
                 pygame.draw.rect(screen, GRAY, [game.x + TILE * j, game.y + TILE * i, TILE, TILE], 1)
-    
+
 
 def handle_movement(event, keys, game):
     global press_event_active, board2_reversed, board1_reversed, changed1_keys_timer, changed2_keys_timer  # , KEYS1_NOW,KEYS2_NOW
@@ -248,15 +251,15 @@ def actual_figure(game):
                 p = i * 5 + j
                 if p in game.figure.base:
                     if fliped:
-                        block=pygame.draw.rect(screen, game.figure.color.value,
-                                        [game.x + TILE * (whole_width-(j + game.figure.x) - 1) + 1,
-                                        game.y + TILE * (i + game.figure.y) + 1,
-                                        TILE - 2, TILE - 2])
+                        block = pygame.draw.rect(screen, game.figure.color.value,
+                                                 [game.x + TILE * (whole_width - (j + game.figure.x) - 1) + 1,
+                                                  game.y + TILE * (i + game.figure.y) + 1,
+                                                  TILE - 2, TILE - 2])
                     else:
-                        block=pygame.draw.rect(screen, game.figure.color.value,
-                                        [game.x + TILE * (j + game.figure.x) +1,
-                                        game.y + TILE * (i + game.figure.y) + 1,
-                                        TILE - 2, TILE - 2])
+                        block = pygame.draw.rect(screen, game.figure.color.value,
+                                                 [game.x + TILE * (j + game.figure.x) + 1,
+                                                  game.y + TILE * (i + game.figure.y) + 1,
+                                                  TILE - 2, TILE - 2])
                     if game.figure.rotative == "non_rotative":
                         pygame.draw.rect(screen, (255, 51, 255), block, width=3)
 
@@ -269,10 +272,11 @@ def whole_figures(game):
             if game.field[i][j] != 0:
                 if fliped:
                     pygame.draw.rect(screen, game.field[i][j].value,
-                                    [game.x + TILE * (whole_width - (j+1)) + 1 , game.y + TILE * i + 1, TILE - 2, TILE - 1])
+                                     [game.x + TILE * (whole_width - (j + 1)) + 1, game.y + TILE * i + 1, TILE - 2,
+                                      TILE - 1])
                 else:
                     pygame.draw.rect(screen, game.field[i][j].value,
-                                    [game.x + TILE * j + 1 , game.y + TILE * i + 1, TILE - 2, TILE - 1])
+                                     [game.x + TILE * j + 1, game.y + TILE * i + 1, TILE - 2, TILE - 1])
 
 
 def open_close_bridge(game, is_bridge_opened):
@@ -284,8 +288,10 @@ def open_close_bridge(game, is_bridge_opened):
     else:
         return True
 
+# Events
 
-def decide_about_event():
+
+def decide_press_event():
     if random.random() < 0.03:
         return True
     return False
@@ -297,18 +303,21 @@ def new_press_event():
     return new_x, new_y
 
 
-def change_keys(keys):
-    random.shuffle(keys)
-
-def decide_about_event2():
+def decide_flip_event():
     global flip_timer
     if random.random() < 0.01:
         flip_timer = time.time() + FLIP_EVENT_TIME
         return True
     return False
 
+
+def change_keys(keys):
+    random.shuffle(keys)
+
+
+# Game
 def play(nick1, nick2):
-    global press_event_active, event_x, event_y, changed1_keys_timer, changed2_keys_timer, KEYS1_NOW, KEYS2_NOW,flip_timer,fliped
+    global press_event_active, event_x, event_y, changed1_keys_timer, changed2_keys_timer, KEYS1_NOW, KEYS2_NOW, flip_timer, fliped
     clock = pygame.time.Clock()
     MAP = [[0 for _ in range(2 * MAP_WIDTH + BRIDGE_WIDTH)] for _ in range(MAP_HEIGHT)]
     global game1
@@ -316,14 +325,16 @@ def play(nick1, nick2):
     game1 = Tetris(MAP_HEIGHT, MAP_WIDTH, MAP, 0, nick1)
     game2 = Tetris(MAP_HEIGHT, MAP_WIDTH, MAP, 1, nick2)
 
-
     run = True
-    counter = 0
+
     font = pygame.font.SysFont('Calibri', 25, True, False)
     text_event = font.render("Press!", True, BLACK)
+
     press_event_active = False
     event_x, event_y = 0, 0
-    counter1, counter2 = 0, 0
+    counter_p1, counter_p2 = 0, 0
+    basic_counter = 0
+
 
     # Bridge
     bridge_timer = time.time() + BRIDGE_TIME
@@ -339,7 +350,6 @@ def play(nick1, nick2):
 
         if current_time >= bridge_timer:
             game1.isBridge = game2.isBridge = open_close_bridge(game1, game1.isBridge)
-            #   print(game1.isBridge)
             bridge_timer = current_time + BRIDGE_TIME
 
         if current_time >= changed1_keys_timer:
@@ -349,24 +359,20 @@ def play(nick1, nick2):
         if current_time >= flip_timer:
             fliped = False
 
-        counter += 1
-        if counter > SPEED:
-            counter = 0
+        basic_counter += 1
+        counter_p1 += 1
+        counter_p2 += 1
+        if basic_counter > SPEED:
+            basic_counter = 0
 
-        # if counter % SPEED == 1 and game1.going and game2.going:
-        #     game1.fall()
-        #     game2.fall()
-        counter1 += 1
-        counter2 += 1
-        if counter1 > game1.speed:
-            counter1 = 0
-        if counter2 > game2.speed:
-            counter2 = 0
-        if counter1 % game1.speed == 1 and game1.going and game2.going:
+        if counter_p1 > game1.speed:
+            counter_p1 = 0
+        if counter_p2 > game2.speed:
+            counter_p2 = 0
+        if counter_p1 % game1.speed == 1 and game1.going and game2.going:
             game1.fall()
-        if counter2 % game2.speed == 1 and game1.going and game2.going:
+        if counter_p2 % game2.speed == 1 and game1.going and game2.going:
             game2.fall()
-
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -376,7 +382,7 @@ def play(nick1, nick2):
             handle_movement(event, KEYS2_NOW, game2)
 
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                main_menu()
+                menu_main()
 
         screen.fill(WHITE)
 
@@ -388,14 +394,14 @@ def play(nick1, nick2):
         if press_event_active:
             screen.blit(text_event, [event_x, event_y])
         else:
-            if counter % SPEED == 1 and game1.going and game2.going:
-                press_event_active = decide_about_event()
+            if basic_counter % SPEED == 1 and game1.going and game2.going:
+                press_event_active = decide_press_event()
                 if press_event_active:
                     event_x, event_y = new_press_event()
 
         if not fliped:
-            if counter % SPEED == 1 and game1.going and game2.going:
-                fliped = decide_about_event2()
+            if basic_counter % SPEED == 1 and game1.going and game2.going:
+                fliped = decide_flip_event()
 
         if not game1.going or not game2.going:
             run = False
@@ -403,22 +409,24 @@ def play(nick1, nick2):
             font = pygame.font.SysFont('Calibri', 50, True, False)
             if not game2.going:
                 text = font.render("Wygrał {}".format(game1.nick), True, WHITE)
-                prepend_to_file(game1.nick + ', ' + game2.nick)
+                write_to_scoreboard(game1.nick + ', ' + game2.nick)
             else:
                 text = font.render("Wygrał {}".format(game2.nick), True, WHITE)
-                prepend_to_file(game2.nick + ', ' + game1.nick)
+                write_to_scoreboard(game2.nick + ', ' + game1.nick)
             screen.blit(pygame.image.load("assets/background.jpg"), (-40, 0))
-            screen.blit(text, [265,80])
+            screen.blit(text, [265, 80])
             pygame.display.update()
             time.sleep(5)
-            main_menu()
+            menu_main()
 
         pygame.display.update()
 
     pygame.quit()
 
 
-def main_menu():
+# Menu section
+
+def menu_main():
     while True:
         screen.blit(pygame.image.load("assets/background.jpg"), (-40, 0))
 
@@ -430,12 +438,13 @@ def main_menu():
         settings_button = Button(image=pygame.image.load("assets/button.png"), pos=(390, 250), text_input="RULES",
                                  font=pygame.font.SysFont('Arial', 60),
                                  base_color="#00CC66", hover_color="#00FF80")
-        scoreboard_button = Button(image=pygame.image.load("assets/button.png"), pos=(390, 390), text_input="SCOREBOARD",
+        scoreboard_button = Button(image=pygame.image.load("assets/button.png"), pos=(390, 390),
+                                   text_input="SCOREBOARD",
                                    font=pygame.font.SysFont('Arial', 60),
                                    base_color="#00CC66", hover_color="#00FF80")
         controls_button = Button(image=pygame.image.load("assets/button.png"), pos=(390, 530), text_input="CONTROLS",
-                                   font=pygame.font.SysFont('Arial', 60),
-                                   base_color="#00CC66", hover_color="#00FF80")
+                                 font=pygame.font.SysFont('Arial', 60),
+                                 base_color="#00CC66", hover_color="#00FF80")
 
         for button in [play_button, settings_button, scoreboard_button, controls_button]:
             button.change_color(menu_mouse_pos)
@@ -447,17 +456,244 @@ def main_menu():
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if play_button.check_for_input(menu_mouse_pos):
-                    insert_names()
+                    menu_insert_nicknames()
                 if settings_button.check_for_input(menu_mouse_pos):
-                    settings()
+                    menu_rules()
                 if scoreboard_button.check_for_input(menu_mouse_pos):
-                    scoreboard()
+                    menu_scoreboard()
                 if controls_button.check_for_input(menu_mouse_pos):
-                    controls_menu()
+                    menu_controls()
         pygame.display.update()
 
 
-def insert_names():
+def menu_scoreboard():
+    pygame.init()
+    screen = pygame.display.set_mode((800, 600))
+    font = pygame.font.Font(None, 32)
+    WHITE = (255, 255, 255)
+    while True:
+        screen.blit(pygame.image.load("assets/background.jpg"), (0, 0))
+
+        menu_mouse_pos = pygame.mouse.get_pos()
+
+        back_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(700, 35),
+                             text_input="BACK",
+                             font=pygame.font.SysFont('Arial', 60),
+                             base_color="#00CC66", hover_color="#00FF80")
+
+        for button in [back_button]:
+            button.change_color(menu_mouse_pos)
+            button.update(screen)
+
+        with open('result.txt', 'r') as f:
+            lines = f.readlines()
+
+        win_text = font.render("WYGRANA", True, WHITE)
+        lose_text = font.render("PRZEGRANA", True, WHITE)
+
+        screen.blit(win_text, (200, 100))
+        screen.blit(lose_text, (400, 100))
+
+        for i, line in enumerate(lines):
+            win, lose = line.strip().split(',')
+            win_text = font.render(win, True, WHITE)
+            lose_text = font.render(lose, True, WHITE)
+
+            screen.blit(win_text, (200, 130 + i * 30))
+            screen.blit(lose_text, (400, 130 + i * 30))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if back_button.check_for_input(menu_mouse_pos):
+                    menu_main()
+
+        pygame.display.update()
+
+
+def write_to_scoreboard(new_line):
+    file_name = 'result.txt'
+    with open(file_name, 'r') as file:
+        lines = file.readlines()
+
+    lines.insert(0, new_line + "\n")
+
+    if len(lines) > 10:
+        lines = lines[:-1]
+
+    with open(file_name, 'w') as file:
+        file.writelines(lines)
+
+
+def menu_controls():
+    global PLAYER1_KEYS, PLAYER2_KEYS, SP_KEY2, SP_KEY1
+    font = pygame.font.SysFont('Calibri', 25, True, False)
+    text1 = font.render("Podstawowe przyciski gracza pierwszego to W, S, A, D oraz 1.", True, WHITE)
+    text2 = font.render("Podstawowe przyciski gracza pierwszego to strzałki oraz enter.", True, WHITE)
+    text3 = font.render("Ustawienie przycisków gracza 1:", True, WHITE)
+    text4 = font.render("Ustawienie przycisków gracza 2:", True, WHITE)
+    font = pygame.font.SysFont('Calibri', 22, True, False)
+    text5 = font.render("Aby ustawić wciśnij przycisk, a następnie klawisz który ma zostać ustawiony.", True, WHITE)
+    text6 = make_text(PLAYER1_KEYS[0])
+    text7 = make_text(PLAYER1_KEYS[1])
+    text8 = make_text(PLAYER1_KEYS[2])
+    text9 = make_text(PLAYER1_KEYS[3])
+    text10 = make_text(SP_KEY1)
+    text11 = make_text(PLAYER2_KEYS[0])
+    text12 = make_text(PLAYER2_KEYS[1])
+    text13 = make_text(PLAYER2_KEYS[2])
+    text14 = make_text(PLAYER2_KEYS[3])
+    text15 = make_text(SP_KEY2)
+    while True:
+        screen.blit(pygame.image.load("assets/background.jpg"), (-40, 0))
+        screen.blit(text1, [80, 80])
+        screen.blit(text2, [80, 110])
+        screen.blit(text3, [20, 170])
+        screen.blit(text4, [460, 170])
+        screen.blit(text5, [80, 560])
+        screen.blit(text6, [280, 220])
+        screen.blit(text7, [280, 290])
+        screen.blit(text8, [280, 360])
+        screen.blit(text9, [280, 430])
+        screen.blit(text10, [280, 500])
+        screen.blit(text11, [730, 220])
+        screen.blit(text12, [730, 290])
+        screen.blit(text13, [730, 360])
+        screen.blit(text14, [730, 430])
+        screen.blit(text15, [730, 500])
+
+        menu_mouse_pos = pygame.mouse.get_pos()
+        back_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(700, 35),
+                             text_input="BACK",
+                             font=pygame.font.SysFont('Arial', 60),
+                             base_color="#00CC66", hover_color="#00FF80")
+        up1_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(160, 230),
+                            text_input="UP",
+                            font=pygame.font.SysFont('Arial', 60),
+                            base_color="#00CC66", hover_color="#00FF80")
+        down1_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(160, 300),
+                              text_input="DOWN",
+                              font=pygame.font.SysFont('Arial', 60),
+                              base_color="#00CC66", hover_color="#00FF80")
+        left1_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(160, 370),
+                              text_input="LEFT",
+                              font=pygame.font.SysFont('Arial', 60),
+                              base_color="#00CC66", hover_color="#00FF80")
+        right1_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(160, 440),
+                               text_input="RIGHT",
+                               font=pygame.font.SysFont('Arial', 60),
+                               base_color="#00CC66", hover_color="#00FF80")
+        sp1_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(160, 510),
+                            text_input="SPECIAL",
+                            font=pygame.font.SysFont('Arial', 60),
+                            base_color="#00CC66", hover_color="#00FF80")
+
+        up2_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(610, 230),
+                            text_input="UP",
+                            font=pygame.font.SysFont('Arial', 60),
+                            base_color="#00CC66", hover_color="#00FF80")
+        down2_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(610, 300),
+                              text_input="DOWN",
+                              font=pygame.font.SysFont('Arial', 60),
+                              base_color="#00CC66", hover_color="#00FF80")
+        left2_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(610, 370),
+                              text_input="LEFT",
+                              font=pygame.font.SysFont('Arial', 60),
+                              base_color="#00CC66", hover_color="#00FF80")
+        right2_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(610, 440),
+                               text_input="RIGHT",
+                               font=pygame.font.SysFont('Arial', 60),
+                               base_color="#00CC66", hover_color="#00FF80")
+        sp2_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(610, 510),
+                            text_input="SPECIAL",
+                            font=pygame.font.SysFont('Arial', 60),
+                            base_color="#00CC66", hover_color="#00FF80")
+
+        for button in [back_button, up1_button, up2_button, down1_button, down2_button, left1_button, left2_button,
+                       right1_button, right2_button, sp1_button, sp2_button]:
+            button.change_color(menu_mouse_pos)
+            button.update(screen)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if back_button.check_for_input(menu_mouse_pos):
+                    menu_main()
+                if up1_button.check_for_input(menu_mouse_pos):
+                    set_control(0, PLAYER1_KEYS)
+                if up2_button.check_for_input(menu_mouse_pos):
+                    set_control(0, PLAYER2_KEYS)
+                if down1_button.check_for_input(menu_mouse_pos):
+                    set_control(1, PLAYER1_KEYS)
+                if down2_button.check_for_input(menu_mouse_pos):
+                    set_control(1, PLAYER2_KEYS)
+                if left1_button.check_for_input(menu_mouse_pos):
+                    set_control(2, PLAYER1_KEYS)
+                if left2_button.check_for_input(menu_mouse_pos):
+                    set_control(2, PLAYER2_KEYS)
+                if right1_button.check_for_input(menu_mouse_pos):
+                    set_control(3, PLAYER1_KEYS)
+                if right2_button.check_for_input(menu_mouse_pos):
+                    set_control(3, PLAYER2_KEYS)
+                if sp1_button.check_for_input(menu_mouse_pos):
+                    set_control(4, 0)
+                if sp2_button.check_for_input(menu_mouse_pos):
+                    set_control(4, 1)
+
+        pygame.display.update()
+
+
+def set_control(id, keys):
+    global SP_KEY2, SP_KEY1
+    waiting = True
+    while waiting:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                menu_main()
+            if event.type == pygame.KEYDOWN:
+                if id == 4:
+                    if keys == 0:
+                        SP_KEY1 = event.key
+                    else:
+                        SP_KEY2 = event.key
+                else:
+                    keys[id] = event.key
+                menu_controls()
+
+
+def menu_rules():
+    while True:
+        screen.blit(pygame.image.load("assets/rules.png"), (0, 0))
+
+        menu_mouse_pos = pygame.mouse.get_pos()
+
+        back_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(700, 35),
+                             text_input="BACK",
+                             font=pygame.font.SysFont('Arial', 60),
+                             base_color="#00CC66", hover_color="#00FF80")
+
+        for button in [back_button]:
+            button.change_color(menu_mouse_pos)
+            button.update(screen)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if back_button.check_for_input(menu_mouse_pos):
+                    menu_main()
+        pygame.display.update()
+
+
+def menu_insert_nicknames():
     pygame.init()
 
     screen = pygame.display.set_mode((800, 600))
@@ -526,7 +762,7 @@ def insert_names():
         screen.blit(txt_surface1, (input_box1_rect.x + 5, input_box1_rect.y + 5))
         screen.blit(txt_surface2, (input_box2_rect.x + 5, input_box2_rect.y + 5))
 
-        label_font = pygame.font.Font(None, 32) # font for the labels
+        label_font = pygame.font.Font(None, 32)
         label1 = label_font.render("Gracz 1: ", True, pygame.Color('white'))
         label2 = label_font.render("Gracz 2: ", True, pygame.Color('white'))
 
@@ -538,6 +774,7 @@ def insert_names():
 
         pygame.display.flip()
 
+
 def make_text(key):
     font = pygame.font.SysFont('Calibri', 25, True, False)
     try:
@@ -545,234 +782,7 @@ def make_text(key):
     except ValueError:
         character = " "
     return font.render(character, True, WHITE)
-    
-def controls_menu():
-    global PLAYER1_KEYS,PLAYER2_KEYS,SP_KEY2,SP_KEY1
-    font = pygame.font.SysFont('Calibri', 25, True, False)
-    text1 = font.render("Podstawowe przyciski gracza pierwszego to W, S, A, D oraz 1.", True, WHITE)
-    text2 = font.render("Podstawowe przyciski gracza pierwszego to strzałki oraz enter.", True, WHITE)
-    text3 = font.render("Ustawienie przycisków gracza 1:", True, WHITE)
-    text4 = font.render("Ustawienie przycisków gracza 2:", True, WHITE)
-    font = pygame.font.SysFont('Calibri', 22, True, False)
-    text5 = font.render("Aby ustawić wciśnij przycisk, a następnie klawisz który ma zostać ustawiony.", True, WHITE)
-    text6 = make_text(PLAYER1_KEYS[0])
-    text7 = make_text(PLAYER1_KEYS[1])
-    text8 = make_text(PLAYER1_KEYS[2])
-    text9 = make_text(PLAYER1_KEYS[3])
-    text10 = make_text(SP_KEY1)
-    text11 = make_text(PLAYER2_KEYS[0])
-    text12 = make_text(PLAYER2_KEYS[1])
-    text13 = make_text(PLAYER2_KEYS[2])
-    text14 = make_text(PLAYER2_KEYS[3])
-    text15 = make_text(SP_KEY2)
-    while True:
-        screen.blit(pygame.image.load("assets/background.jpg"), (-40, 0))
-        screen.blit(text1, [80,80])
-        screen.blit(text2, [80,110])
-        screen.blit(text3, [20,170])
-        screen.blit(text4, [460,170])
-        screen.blit(text5, [80,560])
-        screen.blit(text6, [280,220])
-        screen.blit(text7, [280,290])
-        screen.blit(text8, [280,360])
-        screen.blit(text9, [280,430])
-        screen.blit(text10, [280,500])
-        screen.blit(text11, [730,220])
-        screen.blit(text12, [730,290])
-        screen.blit(text13, [730,360])
-        screen.blit(text14, [730,430])
-        screen.blit(text15, [730,500])
-        
-        menu_mouse_pos = pygame.mouse.get_pos()
-        back_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(700, 35),
-                                   text_input="BACK",
-                                   font=pygame.font.SysFont('Arial', 60),
-                                   base_color="#00CC66", hover_color="#00FF80")
-        up1_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(160, 230),
-                                   text_input="UP",
-                                   font=pygame.font.SysFont('Arial', 60),
-                                   base_color="#00CC66", hover_color="#00FF80")
-        down1_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(160, 300),
-                                   text_input="DOWN",
-                                   font=pygame.font.SysFont('Arial', 60),
-                                   base_color="#00CC66", hover_color="#00FF80")
-        left1_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(160, 370),
-                                   text_input="LEFT",
-                                   font=pygame.font.SysFont('Arial', 60),
-                                   base_color="#00CC66", hover_color="#00FF80")
-        right1_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(160, 440),
-                                   text_input="RIGHT",
-                                   font=pygame.font.SysFont('Arial', 60),
-                                   base_color="#00CC66", hover_color="#00FF80")
-        sp1_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(160, 510),
-                                   text_input="SPECIAL",
-                                   font=pygame.font.SysFont('Arial', 60),
-                                   base_color="#00CC66", hover_color="#00FF80")
-        
-        up2_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(610,230),
-                                   text_input="UP",
-                                   font=pygame.font.SysFont('Arial', 60),
-                                   base_color="#00CC66", hover_color="#00FF80")
-        down2_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(610, 300),
-                                   text_input="DOWN",
-                                   font=pygame.font.SysFont('Arial', 60),
-                                   base_color="#00CC66", hover_color="#00FF80")
-        left2_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(610, 370),
-                                   text_input="LEFT",
-                                   font=pygame.font.SysFont('Arial', 60),
-                                   base_color="#00CC66", hover_color="#00FF80")
-        right2_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(610, 440),
-                                   text_input="RIGHT",
-                                   font=pygame.font.SysFont('Arial', 60),
-                                   base_color="#00CC66", hover_color="#00FF80")
-        sp2_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(610, 510),
-                                   text_input="SPECIAL",
-                                   font=pygame.font.SysFont('Arial', 60),
-                                   base_color="#00CC66", hover_color="#00FF80")
-        
-        for button in [back_button,up1_button,up2_button,down1_button,down2_button,left1_button,left2_button,right1_button,right2_button,sp1_button,sp2_button]:
-            button.change_color(menu_mouse_pos)
-            button.update(screen)
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if back_button.check_for_input(menu_mouse_pos):
-                    main_menu()
-                if up1_button.check_for_input(menu_mouse_pos):
-                    set_control(0,PLAYER1_KEYS)
-                if up2_button.check_for_input(menu_mouse_pos):
-                    set_control(0,PLAYER2_KEYS)
-                if down1_button.check_for_input(menu_mouse_pos):
-                    set_control(1,PLAYER1_KEYS)
-                if down2_button.check_for_input(menu_mouse_pos):
-                    set_control(1,PLAYER2_KEYS)
-                if left1_button.check_for_input(menu_mouse_pos):
-                    set_control(2,PLAYER1_KEYS)
-                if left2_button.check_for_input(menu_mouse_pos):
-                    set_control(2,PLAYER2_KEYS)
-                if right1_button.check_for_input(menu_mouse_pos):
-                    set_control(3,PLAYER1_KEYS)
-                if right2_button.check_for_input(menu_mouse_pos):
-                    set_control(3,PLAYER2_KEYS)
-                if sp1_button.check_for_input(menu_mouse_pos):
-                    set_control(4,0)
-                if sp2_button.check_for_input(menu_mouse_pos):
-                   set_control(4,1)
-                
-        pygame.display.update()
-
-
-def set_control(id, keys):
-    global SP_KEY2, SP_KEY1
-    waiting = True
-    while waiting:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                main_menu()
-            if event.type == pygame.KEYDOWN:
-                if id == 4:
-                    if keys == 0:
-                        SP_KEY1 = event.key
-                    else:
-                        SP_KEY2 = event.key
-                else:
-                    keys[id] = event.key
-                controls_menu()
-
-
-def settings():
-    while True:
-        screen.blit(pygame.image.load("assets/rules.png"), (0, 0))
-
-        menu_mouse_pos = pygame.mouse.get_pos()
-
-        back_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(700, 35),
-                                   text_input="BACK",
-                                   font=pygame.font.SysFont('Arial', 60),
-                                   base_color="#00CC66", hover_color="#00FF80")
-
-        for button in [back_button]:
-            button.change_color(menu_mouse_pos)
-            button.update(screen)
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if back_button.check_for_input(menu_mouse_pos):
-                    main_menu()
-        pygame.display.update()
-
-
-def prepend_to_file(new_line):
-    file_name = 'result.txt'
-    with open(file_name, 'r') as file:
-        lines = file.readlines()
-
-    lines.insert(0, new_line + "\n")
-
-    if len(lines) > 5:
-        lines = lines[:-1]
-
-    with open(file_name, 'w') as file:
-        file.writelines(lines)
-
-
-def scoreboard():
-    pygame.init()
-    screen = pygame.display.set_mode((800, 600))
-    font = pygame.font.Font(None, 32) # Font for the table
-    WHITE = (255, 255, 255)
-    while True:
-        screen.blit(pygame.image.load("assets/background.jpg"), (0, 0))
-
-        menu_mouse_pos = pygame.mouse.get_pos()
-
-        back_button = Button(image=pygame.image.load("assets/smaller_button.png"), pos=(700, 35),
-                             text_input="BACK",
-                             font=pygame.font.SysFont('Arial', 60),
-                             base_color="#00CC66", hover_color="#00FF80")
-
-        for button in [back_button]:
-            button.change_color(menu_mouse_pos)
-            button.update(screen)
-
-        with open('result.txt', 'r') as f:
-            lines = f.readlines()
-
-        # Render headers
-        win_text = font.render("WYGRANA", True, WHITE)
-        lose_text = font.render("PRZEGRANA", True, WHITE)
-
-        screen.blit(win_text, (200, 100))
-        screen.blit(lose_text, (400, 100))
-
-        for i, line in enumerate(lines):
-            win, lose = line.strip().split(',')
-            win_text = font.render(win, True, WHITE)
-            lose_text = font.render(lose, True, WHITE)
-
-            screen.blit(win_text, (200, 130 + i*30))
-            screen.blit(lose_text, (400, 130 + i*30))
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if back_button.check_for_input(menu_mouse_pos):
-                    main_menu()
-
-        pygame.display.update()
-
 
 
 if __name__ == "__main__":
-    main_menu()
+    menu_main()
